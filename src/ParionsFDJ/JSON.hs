@@ -7,6 +7,7 @@ module ParionsFDJ.JSON
   , Outcome(..)
   , Formule(..)
   , Event(..)
+  , Sport(..)
   ) where
 
 import Control.Applicative ((<|>))
@@ -26,7 +27,7 @@ data Event = Event
   , eventID :: Int
   , eventType :: String
   , formules :: [Formule]
-  , eventSportID :: Int
+  , eventSportID :: Sport
   , urlStats :: String
   } deriving (Eq, Show)
 
@@ -40,7 +41,7 @@ instance AE.FromJSON Event where
       eventID <- readIntAsText <$> o .: "eventId"
       eventType <- o .: "eventType"
       formules <- MY.fromMaybe [] <$> o .:? "formules"
-      eventSportID <- readIntAsText <$> o .: "sportId"
+      eventSportID <- o .: "sportId"
       urlStats <- o .: "urlStats"
       return Event {..}
 
@@ -57,7 +58,7 @@ data Formule = Formule
   , marketTypeGroup :: String
   , marketTypeID :: Int
   , outcomes :: [Outcome]
-  , sportID :: Int
+  , sportID :: Sport
   } deriving (Eq, Show)
 
 instance AE.FromJSON Formule where
@@ -75,7 +76,7 @@ instance AE.FromJSON Formule where
       marketTypeID <-
         (readIntAsText <$> o .: "marketTypeId") <|> o .: "marketTypeId"
       outcomes <- o .: "outcomes"
-      sportID <- readIntAsText <$> o .: "sportId"
+      sportID <- o .: "sportId"
       return Formule {..}
 
 {- Outcome -}
@@ -138,3 +139,32 @@ instance AE.FromJSON Winner where
       f = g . SC.toBoundedInteger
       g (Just i) = return $ Int i
       g Nothing = fail $ "Not an integer" ++ show o
+
+data Sport
+  = Football
+  | Tennis
+  | BasketBall
+  | Rugby
+  | VolleyBall
+  | Formule1
+  | Baseball
+  | BeachVolley
+  | Athletism
+  | Swimming
+  deriving (Eq, Show)
+
+instance AE.FromJSON Sport where
+  parseJSON =
+    AE.withText "sport" $ \s ->
+      case s of
+        "100" -> return Football
+        "600" -> return Tennis
+        "601600" -> return BasketBall
+        "964500" -> return Rugby
+        "1200" -> return VolleyBall
+        "1300" -> return Formule1
+        "433100" -> return Baseball
+        "1250" -> return BeachVolley
+        "964700" -> return Athletism
+        "2400" -> return Swimming
+        _ -> fail $ "Unknown sport with id" ++ show s

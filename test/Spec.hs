@@ -51,7 +51,7 @@ testParseFormule =
             , Outcome 1.75 "N" 2 2 Nil (Bool False)
             , Outcome 3.90 "2" 3 2 Up (Bool False)
             ]
-        , sportID = 100
+        , sportID = Football
         }
 
 testParseOutcome :: Test
