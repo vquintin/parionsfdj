@@ -189,4 +189,20 @@ data MarketType
   | PM1_5
   | PM2_5
   | PM3_5
+  | PM4_5
   | FullTime
+
+instance AE.FromJSON MarketType where
+  parseJSON =
+    AE.withText "market type" $ \s ->
+      case s of
+        "Mi-Temps" -> return HalfTime
+        "Handicap [0:1]" -> return Handicap0_1
+        "Score exact" -> return ExactScore
+        "MT/FM" -> return HTFT
+        "Double Chance" -> return DoubleChance
+        "Plus/Moins 1,5 but (Temps réglementaire)" -> return PM1_5
+        "Plus/Moins 2,5 but (Temps réglementaire)" -> return PM2_5
+        "Plus/Moins 3,5 but (Temps réglementaire)" -> return PM3_5
+        "1/N/2" -> return FullTime
+        _ -> fail $ "Unknown MarketType " ++ show s
