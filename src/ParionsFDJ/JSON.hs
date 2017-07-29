@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module ParionsFDJ.JSON
   ( Trend(..)
   , Outcome(..)
+  , Formule(..)
   ) where
 
 import qualified Data.Aeson as AE
@@ -23,10 +25,10 @@ data Event = Event
   , urlStats :: String
   } deriving (Eq, Show)
 
+{- Formule -}
 data Formule = Formule
   { competition :: String
-  , competitionId :: Int
-  , count :: Int
+  , competitionID :: Int
   , end :: TI.UTCTime
   , formuleEventID :: Int
   , index :: Int
@@ -38,6 +40,23 @@ data Formule = Formule
   , outcomes :: [Outcome]
   , sportID :: Int
   } deriving (Eq, Show)
+
+instance AE.FromJSON Formule where
+  parseJSON =
+    AE.withObject "formule" $ \o -> do
+      competition <- o .: "competition"
+      competitionID <- readIntAsText <$> o .: "competitionId"
+      end <- o .: "end"
+      formuleEventID <- readIntAsText <$> o .: "eventId"
+      index <- readIntAsText <$> o .: "index"
+      formuleLabel <- o .: "label"
+      marketID <- readIntAsText <$> o .: "marketId"
+      marketType <- o .: "marketType"
+      marketTypeGroup <- o .: "marketTypeGroup"
+      marketTypeID <- readIntAsText <$> o .: "marketTypeId"
+      outcomes <- o .: "outcomes"
+      sportID <- readIntAsText <$> o .: "sportId"
+      return Formule {..}
 
 {- Outcome -}
 data Outcome = Outcome

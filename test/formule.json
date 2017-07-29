@@ -1,0 +1,41 @@
+{
+	"authorizationExclusion": "11010000",
+	"betTypeExclusions": "00000000000000000000000000000",
+	"competition": "Ch.D1 Roumanie",
+	"competitionId": "1384",
+	"end": "2017-07-28T19:55:00+02:00",
+	"eventId": "384006",
+	"index": "529",
+	"label": "Con.Chiajna-StudentescIasi",
+	"marketId": "1939855",
+	"marketType": "Mi-Temps",
+	"marketTypeGroup": "Mi-Temps",
+	"marketTypeId": "2",
+	"outcomes": [
+		{
+			"cote": "2,35",
+			"label": "1",
+			"pos": "1",
+			"status": 2,
+			"trend": "-1",
+			"winner": false
+		},
+		{
+			"cote": "1,75",
+			"label": "N",
+			"pos": "2",
+			"status": 2,
+			"trend": "0",
+			"winner": false
+		},
+		{
+			"cote": "3,90",
+			"label": "2",
+			"pos": "3",
+			"status": 2,
+			"trend": "1",
+			"winner": false
+		}
+	],
+	"sportId": "100"
+}

@@ -2,13 +2,46 @@
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
+import Data.Time
 import ParionsFDJ.JSON
 import Test.HUnit
 
 main :: IO ()
 main = showCounts <$> runTestTT tests >>= putStrLn
   where
-    tests = TestList [testParseTrend, testParseOutcome]
+    tests = TestList [testParseTrend, testParseOutcome, testParseFormule]
+
+testParseFormule :: Test
+testParseFormule =
+  TestCase $ do
+    input <- BS.readFile "test/formule.json"
+    assertParsingEqual "Error in parsing formule" input expected
+  where
+    expected =
+      Just
+        Formule
+        { competition = "Ch.D1 Roumanie"
+        , competitionID = 1384
+        , end =
+            parseTimeOrError
+              False
+              defaultTimeLocale
+              "%FT%X%z"
+              "2017-07-28T19:55:00+02:00"
+        , formuleEventID = 384006
+        , index = 529
+        , formuleLabel = "Con.Chiajna-StudentescIasi"
+        , marketID = 1939855
+        , marketType = "Mi-Temps"
+        , marketTypeGroup = "Mi-Temps"
+        , marketTypeID = 2
+        , outcomes =
+            [ Outcome 2.35 "1" 1 2 Down False
+            , Outcome 1.75 "N" 2 2 Nil False
+            , Outcome 3.90 "2" 3 2 Up False
+            ]
+        , sportID = 100
+        }
 
 testParseOutcome :: Test
 testParseOutcome =
