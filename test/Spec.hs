@@ -8,8 +8,17 @@ import Test.HUnit
 main :: IO ()
 main = showCounts <$> runTestTT tests >>= putStrLn
   where
-    tests = TestList [testParseTrend]
+    tests = TestList [testParseTrend, testParseOutcome]
 
+testParseOutcome :: Test
+testParseOutcome =
+  TestCase $ do
+    input <- BS.readFile "test/outcome.json"
+    assertParsingEqual "Error in parsing outcome" input expected
+  where
+    expected = Just $ Outcome 2.35 "1" 1 2 Down False
+
+testParseTrend :: Test
 testParseTrend = parseTestWithCases "Error in parsing trend" cases
   where
     cases =
@@ -19,6 +28,7 @@ testParseTrend = parseTestWithCases "Error in parsing trend" cases
       , ("x", Nothing)
       ]
 
+{- helpers -}
 parseTest ::
      (Eq a, FromJSON a, Show a) => String -> BS.ByteString -> Maybe a -> Test
 parseTest preface input expected =

@@ -2,6 +2,7 @@
 
 module ParionsFDJ.JSON
   ( Trend(..)
+  , Outcome(..)
   ) where
 
 import qualified Data.Aeson as AE
