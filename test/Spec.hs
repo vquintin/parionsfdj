@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.Aeson
+import qualified Data.Aeson as AE
 import qualified Data.ByteString.Lazy as BS
 import Data.Time
 import ParionsFDJ.JSON
@@ -9,7 +9,18 @@ import Test.HUnit
 main :: IO ()
 main = showCounts <$> runTestTT tests >>= putStrLn
   where
-    tests = TestList [testParseTrend, testParseOutcome, testParseFormule]
+    tests =
+      TestList
+        [testParseTrend, testParseOutcome, testParseFormule, testParseEvents]
+
+testParseEvents :: Test
+testParseEvents =
+  TestCase $ do
+    input <- BS.readFile "test/ex.json"
+    let parsed = AE.eitherDecode input :: Either String [Event]
+    case parsed of
+      Left err -> assertFailure err
+      Right _ -> return ()
 
 testParseFormule :: Test
 testParseFormule =
@@ -36,9 +47,9 @@ testParseFormule =
         , marketTypeGroup = "Mi-Temps"
         , marketTypeID = 2
         , outcomes =
-            [ Outcome 2.35 "1" 1 2 Down False
-            , Outcome 1.75 "N" 2 2 Nil False
-            , Outcome 3.90 "2" 3 2 Up False
+            [ Outcome 2.35 "1" 1 2 Down (Bool False)
+            , Outcome 1.75 "N" 2 2 Nil (Bool False)
+            , Outcome 3.90 "2" 3 2 Up (Bool False)
             ]
         , sportID = 100
         }
@@ -49,7 +60,7 @@ testParseOutcome =
     input <- BS.readFile "test/outcome.json"
     assertParsingEqual "Error in parsing outcome" input expected
   where
-    expected = Just $ Outcome 2.35 "1" 1 2 Down False
+    expected = Just $ Outcome 2.35 "1" 1 2 Down (Bool False)
 
 testParseTrend :: Test
 testParseTrend = parseTestWithCases "Error in parsing trend" cases
@@ -63,22 +74,25 @@ testParseTrend = parseTestWithCases "Error in parsing trend" cases
 
 {- helpers -}
 parseTest ::
-     (Eq a, FromJSON a, Show a) => String -> BS.ByteString -> Maybe a -> Test
+     (Eq a, AE.FromJSON a, Show a) => String -> BS.ByteString -> Maybe a -> Test
 parseTest preface input expected =
   TestCase $ assertParsingEqual preface input expected
 
 parseTestWithCases ::
-     (Eq a, FromJSON a, Show a) => String -> [(BS.ByteString, Maybe a)] -> Test
+     (Eq a, AE.FromJSON a, Show a)
+  => String
+  -> [(BS.ByteString, Maybe a)]
+  -> Test
 parseTestWithCases preface cases = TestCase $ foldl f (return ()) cases
   where
     f assertion (input, expected) =
       assertion >> assertParsingEqual preface input expected
 
 assertParsingEqual ::
-     (Eq a, FromJSON a, Show a)
+     (Eq a, AE.FromJSON a, Show a)
   => String
   -> BS.ByteString
   -> Maybe a
   -> Assertion
 assertParsingEqual preface input expected =
-  assertEqual preface expected $ decode input
+  assertEqual preface expected $ AE.decode input

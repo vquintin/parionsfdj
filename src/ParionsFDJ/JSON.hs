@@ -3,12 +3,17 @@
 
 module ParionsFDJ.JSON
   ( Trend(..)
+  , Winner(..)
   , Outcome(..)
   , Formule(..)
+  , Event(..)
   ) where
 
+import Control.Applicative ((<|>))
 import qualified Data.Aeson as AE
-import Data.Aeson ((.:))
+import Data.Aeson ((.:), (.:?))
+import qualified Data.Maybe as MY
+import qualified Data.Scientific as SC
 import qualified Data.Text as TE
 import qualified Data.Text.Read as TR
 import qualified Data.Time as TI
@@ -16,14 +21,28 @@ import qualified Data.Time as TI
 data Event = Event
   { eventCompetition :: String
   , eventCompetitionID :: Int
-  , eventCount :: Int
-  , eventEnd :: Int
+  , count :: Int
+  , eventEnd :: TI.UTCTime
   , eventID :: Int
   , eventType :: String
   , formules :: [Formule]
   , eventSportID :: Int
   , urlStats :: String
   } deriving (Eq, Show)
+
+instance AE.FromJSON Event where
+  parseJSON =
+    AE.withObject "event" $ \o -> do
+      eventCompetition <- o .: "competition"
+      eventCompetitionID <- readIntAsText <$> o .: "competitionId"
+      count <- o .: "count"
+      eventEnd <- o .: "end"
+      eventID <- readIntAsText <$> o .: "eventId"
+      eventType <- o .: "eventType"
+      formules <- MY.fromMaybe [] <$> o .:? "formules"
+      eventSportID <- readIntAsText <$> o .: "sportId"
+      urlStats <- o .: "urlStats"
+      return Event {..}
 
 {- Formule -}
 data Formule = Formule
@@ -53,7 +72,8 @@ instance AE.FromJSON Formule where
       marketID <- readIntAsText <$> o .: "marketId"
       marketType <- o .: "marketType"
       marketTypeGroup <- o .: "marketTypeGroup"
-      marketTypeID <- readIntAsText <$> o .: "marketTypeId"
+      marketTypeID <-
+        (readIntAsText <$> o .: "marketTypeId") <|> o .: "marketTypeId"
       outcomes <- o .: "outcomes"
       sportID <- readIntAsText <$> o .: "sportId"
       return Formule {..}
@@ -65,7 +85,7 @@ data Outcome = Outcome
   , pos :: Int
   , status :: Int
   , trend :: Trend
-  , winner :: Bool
+  , winner :: Winner
   } deriving (Eq, Show)
 
 instance AE.FromJSON Outcome where
@@ -105,3 +125,16 @@ instance AE.FromJSON Trend where
         "0" -> return Nil
         "1" -> return Up
         _ -> fail $ "Unknown trend " ++ show t
+
+data Winner
+  = Bool Bool
+  | Int Int
+  deriving (Eq, Show)
+
+instance AE.FromJSON Winner where
+  parseJSON (AE.Bool b) = return $ Bool b
+  parseJSON o = AE.withScientific "winner int" f o
+    where
+      f = g . SC.toBoundedInteger
+      g (Just i) = return $ Int i
+      g Nothing = fail $ "Not an integer" ++ show o
