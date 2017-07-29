@@ -8,16 +8,27 @@ module ParionsFDJ.JSON
   , Formule(..)
   , Event(..)
   , Sport(..)
+  , parseBetJSON
   ) where
 
 import Control.Applicative ((<|>))
 import qualified Data.Aeson as AE
 import Data.Aeson ((.:), (.:?))
+import qualified Data.Aeson.Types as AT
+import qualified Data.ByteString.Lazy as BS
 import qualified Data.Maybe as MY
 import qualified Data.Scientific as SC
 import qualified Data.Text as TE
 import qualified Data.Text.Read as TR
 import qualified Data.Time as TI
+
+parseBetJSON :: BS.ByteString -> [Event]
+parseBetJSON s = MY.catMaybes $ maybeEvents s
+  where
+    maybeEvents :: BS.ByteString -> [Maybe Event]
+    maybeEvents s = concat $ f <$> AE.decode s
+    f :: [AT.Value] -> [Maybe Event]
+    f = fmap (AT.parseMaybe AE.parseJSON)
 
 data Event = Event
   { eventCompetition :: String
@@ -168,3 +179,14 @@ instance AE.FromJSON Sport where
         "964700" -> return Athletism
         "2400" -> return Swimming
         _ -> fail $ "Unknown sport with id" ++ show s
+
+data MarketType
+  = HalfTime
+  | Handicap0_1
+  | ExactScore
+  | HTFT
+  | DoubleChance
+  | PM1_5
+  | PM2_5
+  | PM3_5
+  | FullTime

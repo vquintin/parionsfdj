@@ -11,7 +11,19 @@ main = showCounts <$> runTestTT tests >>= putStrLn
   where
     tests =
       TestList
-        [testParseTrend, testParseOutcome, testParseFormule, testParseEvents]
+        [ testParseTrend
+        , testParseOutcome
+        , testParseFormule
+        , testParseEvents
+        , testParseBetJSON
+        ]
+
+testParseBetJSON :: Test
+testParseBetJSON =
+  TestCase $ do
+    input <- BS.readFile "test/ex.json"
+    let events = parseBetJSON input
+    assertBool "event list is empty" $ not (null events)
 
 testParseEvents :: Test
 testParseEvents =
