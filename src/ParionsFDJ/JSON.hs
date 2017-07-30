@@ -8,6 +8,7 @@ module ParionsFDJ.JSON
   , Formule(..)
   , Event(..)
   , Sport(..)
+  , MarketType(..)
   , parseBetJSON
   ) where
 
@@ -65,7 +66,7 @@ data Formule = Formule
   , index :: Int
   , formuleLabel :: String
   , marketID :: Int
-  , marketType :: String
+  , marketType :: MarketType
   , marketTypeGroup :: String
   , marketTypeID :: Int
   , outcomes :: [Outcome]
@@ -183,6 +184,7 @@ instance AE.FromJSON Sport where
 data MarketType
   = HalfTime
   | Handicap0_1
+  | Handicap1_0
   | ExactScore
   | HTFT
   | DoubleChance
@@ -191,6 +193,9 @@ data MarketType
   | PM3_5
   | PM4_5
   | FullTime
+  | FirstToScore
+  | ResultPlusMinus
+  deriving (Eq, Show)
 
 instance AE.FromJSON MarketType where
   parseJSON =
@@ -198,11 +203,14 @@ instance AE.FromJSON MarketType where
       case s of
         "Mi-Temps" -> return HalfTime
         "Handicap [0:1]" -> return Handicap0_1
+        "Handicap [1:0]" -> return Handicap1_0
         "Score exact" -> return ExactScore
         "MT/FM" -> return HTFT
-        "Double Chance" -> return DoubleChance
+        "Double chance" -> return DoubleChance
         "Plus/Moins 1,5 but (Temps réglementaire)" -> return PM1_5
-        "Plus/Moins 2,5 but (Temps réglementaire)" -> return PM2_5
-        "Plus/Moins 3,5 but (Temps réglementaire)" -> return PM3_5
+        "Plus/Moins 2,5 buts (Temps réglementaire)" -> return PM2_5
+        "Plus/Moins 3,5 buts (Temps réglementaire)" -> return PM3_5
         "1/N/2" -> return FullTime
+        "1er but" -> return FirstToScore
+        "Résultat & Plus/moins" -> return ResultPlusMinus
         _ -> fail $ "Unknown MarketType " ++ show s

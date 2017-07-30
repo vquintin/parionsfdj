@@ -11,12 +11,7 @@ main = showCounts <$> runTestTT tests >>= putStrLn
   where
     tests =
       TestList
-        [ testParseTrend
-        , testParseOutcome
-        , testParseFormule
-        , testParseEvents
-        , testParseBetJSON
-        ]
+        [testParseTrend, testParseOutcome, testParseFormule, testParseBetJSON]
 
 testParseBetJSON :: Test
 testParseBetJSON =
@@ -55,7 +50,7 @@ testParseFormule =
         , index = 529
         , formuleLabel = "Con.Chiajna-StudentescIasi"
         , marketID = 1939855
-        , marketType = "Mi-Temps"
+        , marketType = HalfTime
         , marketTypeGroup = "Mi-Temps"
         , marketTypeID = 2
         , outcomes =
