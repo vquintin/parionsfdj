@@ -306,3 +306,55 @@ instance AE.FromJSON MatchLineUp where
       case TE.splitOn "-" s of
         [a, b] -> return $ MkMatchLineUp (TE.unpack a) (TE.unpack b)
         _ -> fail $ "Can't parse match line-up" ++ show s
+
+newtype Competition =
+  FootballCompetition FootballCompetition
+  deriving (Eq, Show)
+
+{- FootballCompetition -}
+data FootballCompetition
+  = ChD1 Country
+  | ChD2 Country
+  deriving (Eq, Show)
+
+instance AE.FromJSON FootballCompetition where
+  parseJSON =
+    AE.withText "football competition" $ \s ->
+      case s of
+        "Ligue 1" -> return $ ChD1 France
+        "Ligue 2" -> return $ ChD2 France
+        "Bundesliga 2" -> return $ ChD2 Germany
+
+{- Country -}
+data Country
+  = Belgium
+  | Bulgaria
+  | Chile
+  | Croatia
+  | France
+  | Germany
+  | Ireland
+  | Japan
+  | Mexico
+  | Poland
+  | Slovenia
+  | Romania
+  deriving (Eq, Show)
+
+instance AE.FromJSON Country where
+  parseJSON =
+    AE.withText "country" $ \s ->
+      case s of
+        "Belgique" -> return Belgium
+        "Bulgarie" -> return Bulgaria
+        "Chili" -> return Chile
+        "Croatie" -> return Croatia
+        "France" -> return France
+        "Allemagne" -> return Germany
+        "Irlande" -> return Ireland
+        "Japon" -> return Japan
+        "Mexique" -> return Mexico
+        "Pologne" -> return Poland
+        "Slovénie" -> return Slovenia
+        "Roumanie" -> return Romania
+        _ -> fail $ "Unknown Country " ++ show s
