@@ -9,6 +9,11 @@ module ParionsFDJ.JSON
   , Event(..)
   , Sport(..)
   , MarketType(..)
+  , OutcomeType(..)
+  , OutcomeWinner(..)
+  , OutcomeExactScore(..)
+  , OutcomeHTFT(..)
+  , OutcomeMoreLess(..)
   , parseBetJSON
   ) where
 
@@ -94,7 +99,7 @@ instance AE.FromJSON Formule where
 {- Outcome -}
 data Outcome = Outcome
   { cote :: Double
-  , outcomeLabel :: String
+  , outcomeLabel :: OutcomeType
   , pos :: Int
   , status :: Int
   , trend :: Trend

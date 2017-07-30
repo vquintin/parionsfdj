@@ -54,9 +54,9 @@ testParseFormule =
         , marketTypeGroup = "Mi-Temps"
         , marketTypeID = 2
         , outcomes =
-            [ Outcome 2.35 "1" 1 2 Down (Bool False)
-            , Outcome 1.75 "N" 2 2 Nil (Bool False)
-            , Outcome 3.90 "2" 3 2 Up (Bool False)
+            [ Outcome 2.35 (OutcomeWinner Team1) 1 2 Down (Bool False)
+            , Outcome 1.75 (OutcomeWinner Draw) 2 2 Nil (Bool False)
+            , Outcome 3.90 (OutcomeWinner Team2) 3 2 Up (Bool False)
             ]
         , sportID = Football
         }
@@ -67,7 +67,7 @@ testParseOutcome =
     input <- BS.readFile "test/outcome.json"
     assertParsingEqual "Error in parsing outcome" input expected
   where
-    expected = Just $ Outcome 2.35 "1" 1 2 Down (Bool False)
+    expected = Just $ Outcome 2.35 (OutcomeWinner Team1) 1 2 Down (Bool False)
 
 testParseTrend :: Test
 testParseTrend = parseTestWithCases "Error in parsing trend" cases
