@@ -214,3 +214,77 @@ instance AE.FromJSON MarketType where
         "1er but" -> return FirstToScore
         "Résultat & Plus/moins" -> return ResultPlusMinus
         _ -> fail $ "Unknown MarketType " ++ show s
+
+data OutcomeType
+  = OutcomeWinner OutcomeWinner
+  | OutcomeExactScore OutcomeExactScore
+  | OutcomeHTFT OutcomeHTFT
+  | OutcomeMoreLess OutcomeMoreLess
+  deriving (Eq, Show)
+
+instance AE.FromJSON OutcomeType where
+  parseJSON o =
+    (OutcomeWinner <$> AE.parseJSON o) <|>
+    (OutcomeExactScore <$> AE.parseJSON o) <|>
+    (OutcomeHTFT <$> AE.parseJSON o) <|>
+    (OutcomeMoreLess <$> AE.parseJSON o)
+
+data OutcomeWinner
+  = Team1
+  | Draw
+  | Team2
+  deriving (Eq, Show)
+
+instance AE.FromJSON OutcomeWinner where
+  parseJSON =
+    AE.withText "winner 1/N/2" $ \s ->
+      case s of
+        "1" -> return Team1
+        "N" -> return Draw
+        "2" -> return Team2
+        _ -> fail $ "Unknown 1/N/2 outcome" ++ show s
+
+data OutcomeExactScore
+  = Score Int
+          Int
+  | AllOthers
+  deriving (Eq, Show)
+
+instance AE.FromJSON OutcomeExactScore where
+  parseJSON =
+    AE.withText "score x - y" $ \s ->
+      case TE.splitOn " - " s of
+        [a, b] -> return $ Score (readText a) (readText b)
+        ["Autres"] -> return AllOthers
+        _ -> fail $ "Can't parse score " ++ show s
+    where
+      readText :: (Read a) => TE.Text -> a
+      readText = read . TE.unpack
+
+data OutcomeHTFT =
+  MkOutcomeHTFT OutcomeWinner
+                OutcomeWinner
+  deriving (Eq, Show)
+
+instance AE.FromJSON OutcomeHTFT where
+  parseJSON =
+    AE.withText "winner half-time full-time" $ \s ->
+      case TE.splitOn "/" s of
+        [a, b] -> MkOutcomeHTFT <$> toParser a <*> toParser b
+        _ -> fail $ "Unknown winner half-time full-time" ++ show s
+    where
+      toParser :: TE.Text -> AT.Parser OutcomeWinner
+      toParser = AT.parseJSON . AT.String
+
+data OutcomeMoreLess
+  = More
+  | Less
+  deriving (Eq, Show)
+
+instance AE.FromJSON OutcomeMoreLess where
+  parseJSON =
+    AE.withText "outcome more/less" $ \s ->
+      case s of
+        "Plus" -> return More
+        "Moins" -> return Less
+        _ -> fail $ "Unknown more/less outcome" ++ show s
