@@ -14,6 +14,7 @@ module ParionsFDJ.JSON
   , OutcomeExactScore(..)
   , OutcomeHTFT(..)
   , OutcomeMoreLess(..)
+  , MatchLineUp(..)
   , parseBetJSON
   ) where
 
@@ -69,7 +70,7 @@ data Formule = Formule
   , end :: TI.UTCTime
   , formuleEventID :: Int
   , index :: Int
-  , formuleLabel :: String
+  , formuleLabel :: MatchLineUp
   , marketID :: Int
   , marketType :: MarketType
   , marketTypeGroup :: String
@@ -293,3 +294,15 @@ instance AE.FromJSON OutcomeMoreLess where
         "Plus" -> return More
         "Moins" -> return Less
         _ -> fail $ "Unknown more/less outcome" ++ show s
+
+data MatchLineUp =
+  MkMatchLineUp String
+                String
+  deriving (Eq, Show)
+
+instance AE.FromJSON MatchLineUp where
+  parseJSON =
+    AE.withText "match line-up" $ \s ->
+      case TE.splitOn "-" s of
+        [a, b] -> return $ MkMatchLineUp (TE.unpack a) (TE.unpack b)
+        _ -> fail $ "Can't parse match line-up" ++ show s

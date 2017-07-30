@@ -48,7 +48,7 @@ testParseFormule =
               "2017-07-28T19:55:00+02:00"
         , formuleEventID = 384006
         , index = 529
-        , formuleLabel = "Con.Chiajna-StudentescIasi"
+        , formuleLabel = MkMatchLineUp "Con.Chiajna" "StudentescIasi"
         , marketID = 1939855
         , marketType = HalfTime
         , marketTypeGroup = "Mi-Temps"

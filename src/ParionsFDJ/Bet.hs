@@ -1,5 +1,5 @@
 module ParionsFDJ.Bet
-  (
+  ( toBetSum
   ) where
 
 import qualified Control.Monad as MO
@@ -17,7 +17,7 @@ toBetSum events = do
 
 footballToBetSum :: Event -> [HBS.BetSum]
 footballToBetSum event = do
-  let match = eventToFootBallMatch event
+  match <- eventToFootBallMatch event
   formule <- formules event
   case marketType formule of
     HalfTime ->
@@ -26,20 +26,25 @@ footballToBetSum event = do
       FB.FootballBetInfo match (formuleToHbet strToHalfTime formule)
     _ -> []
 
-eventToFootBallMatch :: Event -> FB.FootballMatch
-eventToFootBallMatch = undefined
+eventToFootBallMatch :: Event -> [FB.FootballMatch]
+eventToFootBallMatch event =
+  case formules event of
+    form:_ ->
+      let (MkMatchLineUp team1 team2) = formuleLabel form
+          competition = undefined
+      in return $ FB.FootballMatch team1 team2 competition
+    [] -> []
 
-formuleToHbet :: (String -> [a]) -> Formule -> [HB.Choice a]
+formuleToHbet :: (OutcomeType -> [a]) -> Formule -> [HB.Choice a]
 formuleToHbet fa formule = do
   outcome <- outcomes formule
   betType <- fa $ outcomeLabel outcome
   let odd = cote outcome
   return $ HB.Choice betType odd
 
-strToHalfTime :: (MO.MonadPlus m) => String -> m FB.FootballHalfTime
-strToHalfTime s =
-  case s of
-    "1" -> return FB.HT1
-    "N" -> return FB.HTDraw
-    "2" -> return FB.HT2
-    _ -> MO.mzero
+strToHalfTime :: (MO.MonadPlus m) => OutcomeType -> m FB.FootballHalfTime
+strToHalfTime (OutcomeWinner winner) =
+  case winner of
+    Team1 -> return FB.HT1
+    Draw -> return FB.HTDraw
+    Team2 -> return FB.HT2
