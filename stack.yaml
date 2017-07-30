@@ -37,9 +37,13 @@ resolver: lts-9.0
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - .
+- location: 
+    git: git@github.com:vquintin/hbet.git
+    commit: aba189a30d4f658d9ae85fb29dd6765ae05c151c
+  extra-dep: true
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps: [ hbet-0.2.4.0 ]
 
 # Override default flag values for local packages and extra-deps
 flags: {}
@@ -65,4 +69,4 @@ extra-package-dbs: []
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
 nix:
-  packages: [binutils]
+  packages: [binutils, git]
