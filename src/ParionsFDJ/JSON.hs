@@ -324,6 +324,15 @@ instance AE.FromJSON FootballCompetition where
         "Ligue 1" -> return $ ChD1 France
         "Ligue 2" -> return $ ChD2 France
         "Bundesliga 2" -> return $ ChD2 Germany
+        _ -> extractWithCountry s
+    where
+      extractWithCountry :: TE.Text -> AT.Parser FootballCompetition
+      extractWithCountry s =
+        case TE.splitOn " " s of
+          ["Ch.D1", country] -> ChD1 <$> toCountryParser country
+          ["Ch.D2", country] -> ChD2 <$> toCountryParser country
+          _ -> fail $ "Unknown competition" ++ show s
+      toCountryParser = AT.parseJSON . AT.String
 
 {- Country -}
 data Country
