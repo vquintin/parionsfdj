@@ -29,11 +29,19 @@ footballToBetSum event = do
 eventToFootBallMatch :: Event -> [FB.FootballMatch]
 eventToFootBallMatch event =
   case formules event of
-    form:_ ->
+    form:_ -> do
       let (MkMatchLineUp team1 team2) = formuleLabel form
-          competition = undefined
-      in return $ FB.FootballMatch team1 team2 competition
+      competition <- convertCompetition $ eventCompetition event
+      return $ FB.FootballMatch team1 team2 competition
     [] -> []
+  where
+    convertCompetition :: Competition -> [FB.FootballEvent]
+    convertCompetition c =
+      case c of
+        FootballCompetition fc ->
+          case fc of
+            ChD1 France -> return FB.Ligue1
+            _ -> []
 
 formuleToHbet :: (OutcomeType -> [a]) -> Formule -> [HB.Choice a]
 formuleToHbet fa formule = do
