@@ -38,7 +38,7 @@ testParseFormule =
     expected =
       Just
         Formule
-        { competition = "Ch.D1 Roumanie"
+        { competition = FootballCompetition $ ChD1 Romania
         , competitionID = 1384
         , end =
             parseTimeOrError

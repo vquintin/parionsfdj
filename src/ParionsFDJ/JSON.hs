@@ -15,6 +15,9 @@ module ParionsFDJ.JSON
   , OutcomeHTFT(..)
   , OutcomeMoreLess(..)
   , MatchLineUp(..)
+  , Competition(..)
+  , FootballCompetition(..)
+  , Country(..)
   , parseBetJSON
   ) where
 
@@ -38,7 +41,7 @@ parseBetJSON s = MY.catMaybes $ maybeEvents s
     f = fmap (AT.parseMaybe AE.parseJSON)
 
 data Event = Event
-  { eventCompetition :: String
+  { eventCompetition :: Competition
   , eventCompetitionID :: Int
   , count :: Int
   , eventEnd :: TI.UTCTime
@@ -65,7 +68,7 @@ instance AE.FromJSON Event where
 
 {- Formule -}
 data Formule = Formule
-  { competition :: String
+  { competition :: Competition
   , competitionID :: Int
   , end :: TI.UTCTime
   , formuleEventID :: Int
@@ -307,9 +310,13 @@ instance AE.FromJSON MatchLineUp where
         [a, b] -> return $ MkMatchLineUp (TE.unpack a) (TE.unpack b)
         _ -> fail $ "Can't parse match line-up" ++ show s
 
+{- Competition -}
 newtype Competition =
   FootballCompetition FootballCompetition
   deriving (Eq, Show)
+
+instance AE.FromJSON Competition where
+  parseJSON o = FootballCompetition <$> AT.parseJSON o
 
 {- FootballCompetition -}
 data FootballCompetition
