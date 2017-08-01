@@ -19,6 +19,7 @@ module ParionsFDJ.JSON
   , FootballCompetition(..)
   , Country(..)
   , parseBetJSON
+  , getEvents
   ) where
 
 import Control.Applicative ((<|>))
@@ -26,11 +27,24 @@ import qualified Data.Aeson as AE
 import Data.Aeson ((.:), (.:?))
 import qualified Data.Aeson.Types as AT
 import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString.Lazy.Char8 as C8
 import qualified Data.Maybe as MY
 import qualified Data.Scientific as SC
 import qualified Data.Text as TE
 import qualified Data.Text.Read as TR
 import qualified Data.Time as TI
+import qualified Network.HTTP as H
+
+getEvents :: IO [Event]
+getEvents = parseBetJSON <$> getJSON
+
+getJSON :: IO BS.ByteString
+getJSON = C8.pack <$> (getResp >>= H.getResponseBody)
+  where
+    getResp =
+      H.simpleHTTP
+        (H.getRequest
+           "https://www.pointdevente.parionssport.fdj.fr/api/1n2/offre")
 
 parseBetJSON :: BS.ByteString -> [Event]
 parseBetJSON s = MY.catMaybes $ maybeEvents s
