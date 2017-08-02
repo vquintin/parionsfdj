@@ -33,18 +33,16 @@ import qualified Data.Scientific as SC
 import qualified Data.Text as TE
 import qualified Data.Text.Read as TR
 import qualified Data.Time as TI
-import qualified Network.HTTP as H
+import qualified Network.HTTP.Simple as H
 
 getEvents :: IO [Event]
 getEvents = parseBetJSON <$> getJSON
 
 getJSON :: IO BS.ByteString
-getJSON = C8.pack <$> (getResp >>= H.getResponseBody)
+getJSON = H.getResponseBody <$> getResp
   where
     getResp =
-      H.simpleHTTP
-        (H.getRequest
-           "https://www.pointdevente.parionssport.fdj.fr/api/1n2/offre")
+      H.httpLBS "https://www.pointdevente.parionssport.fdj.fr/api/1n2/offre"
 
 parseBetJSON :: BS.ByteString -> [Event]
 parseBetJSON s = MY.catMaybes $ maybeEvents s

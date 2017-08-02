@@ -8,51 +8,34 @@ import qualified HBet.BetSum as HBS
 import qualified HBet.Football as FB
 import ParionsFDJ.JSON
 
-toBetSum :: [Event] -> [HBS.BetSum]
+toBetSum :: [Event] -> [HBS.ChoiceSum ()]
 toBetSum events = do
   event <- events
   case eventSportID event of
-    Football -> footballToBetSum event
+    Football -> undefined
     _ -> []
 
-footballToBetSum :: Event -> [HBS.BetSum]
-footballToBetSum event = do
-  match <- eventToFootBallMatch event
-  formule <- formules event
-  case marketType formule of
-    HalfTime ->
-      return $
-      HBS.FootballHalfTime $
-      FB.FootballBetInfo match (formuleToHbet strToHalfTime formule)
-    _ -> []
+type FDJChoice a = HB.Choice a ()
 
-eventToFootBallMatch :: Event -> [FB.FootballMatch]
-eventToFootBallMatch event =
-  case formules event of
-    form:_ -> do
-      let (MkMatchLineUp team1 team2) = formuleLabel form
-      competition <- convertCompetition $ eventCompetition event
-      return $ FB.FootballMatch team1 team2 competition
-    [] -> []
+extractChoices :: (Formule -> [FDJChoice a]) -> Event -> [FDJChoice a]
+extractChoices ex event = formules event >>= ex
+
+{- Football -}
+extractFootballMatch :: Formule -> [FB.FootballMatch]
+extractFootballMatch formule = do
+  let (FootballCompetition comp) = competition formule
+  let (MkMatchLineUp team1 team2) = formuleLabel formule
+  event <- getEvent comp
+  return $ FB.FootballMatch team1 team2 event
   where
-    convertCompetition :: Competition -> [FB.FootballEvent]
-    convertCompetition c =
-      case c of
-        FootballCompetition fc ->
-          case fc of
-            ChD1 France -> return FB.Ligue1
-            _ -> []
+    getEvent (ChD1 France) = return FB.Ligue1
+    getEvent _ = []
 
-formuleToHbet :: (OutcomeType -> [a]) -> Formule -> [HB.Choice a]
-formuleToHbet fa formule = do
+extractFootballChoices :: Formule -> [FDJChoice FB.FootballMatch]
+extractFootballChoices formule = do
+  match <- extractFootballMatch formule
   outcome <- outcomes formule
-  betType <- fa $ outcomeLabel outcome
-  let odd = cote outcome
-  return $ HB.Choice betType odd
-
-strToHalfTime :: (MO.MonadPlus m) => OutcomeType -> m FB.FootballHalfTime
-strToHalfTime (OutcomeWinner winner) =
-  case winner of
-    Team1 -> return FB.HT1
-    Draw -> return FB.HTDraw
-    Team2 -> return FB.HT2
+  let valider = getValider formule outcome
+  return $ HB.Choice () valider match (cote outcome)
+  where
+    getValider formule outcome = undefined
