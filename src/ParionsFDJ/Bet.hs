@@ -39,16 +39,29 @@ extractFootballChoices formule = do
   return $ HB.Choice () valider match (cote outcome)
   where
     getValider formule outcome =
-      case outcomeLabel outcome of
-        OutcomeWinner win -> undefined
-        OutcomeExactScore (Score s1 s2) -> undefined
-        OutcomeHTFT (MkOutcomeHTFT win1 win2) -> undefined
+      case (marketType formule, outcomeLabel outcome) of
+        (HalfTime, OutcomeWinner bet) -> return $ halfTimeToPredicate bet
+        (FullTime, OutcomeWinner bet) -> return $ fullTimeToPredicate bet
+        (ExactScore, OutcomeExactScore bet) ->
+          return $ exactScoreToPredicate bet
+        (HTFT, OutcomeHTFT bet) -> return $ htftToPredicate bet
         _ -> []
 
 {- Helpers -}
-winnerToPredicate :: OutcomeWinner -> HB.Score FB.FootballMatch -> HB.BetResult
-winnerToPredicate t (FB.FootballScore h1 h2 f1 f2)
+fullTimeToPredicate ::
+     OutcomeWinner -> HB.Score FB.FootballMatch -> HB.BetResult
+fullTimeToPredicate t (FB.FootballScore h1 h2 f1 f2)
   | op t (h1 + f1) (h2 + f2) = HB.Win
+  | otherwise = HB.Lose
+  where
+    op Team1 = (>)
+    op Draw = (==)
+    op Team2 = (<)
+
+halfTimeToPredicate ::
+     OutcomeWinner -> HB.Score FB.FootballMatch -> HB.BetResult
+halfTimeToPredicate t (FB.FootballScore h1 h2 _ _)
+  | op t h1 h2 = HB.Win
   | otherwise = HB.Lose
   where
     op Team1 = (>)
@@ -60,3 +73,9 @@ exactScoreToPredicate ::
 exactScoreToPredicate (Score s1 s2) = HB.winOrLose f
   where
     f (FB.FootballScore h1 h2 f1 f2) = (h1 + f1 == s1) && (h2 + f2 == s2)
+
+htftToPredicate :: OutcomeHTFT -> HB.Score FB.FootballMatch -> HB.BetResult
+htftToPredicate (MkOutcomeHTFT win1 win2) score =
+  case (halfTimeToPredicate win1 score, fullTimeToPredicate win2 score) of
+    (HB.Win, HB.Win) -> HB.Win
+    _ -> HB.Lose
