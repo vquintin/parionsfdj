@@ -39,11 +39,11 @@ packages:
 - .
 - location: 
     git: git@github.com:vquintin/hbet.git
-    commit: 2b7e242f4025304515a02d3b255ca59933f24321
+    commit: d4de2fd11ec01211f8493eb4873e76d14c017b9f 
   extra-dep: true
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: [ hbet-0.2.4.0 ]
+extra-deps: [ hbet-0.3.2.0 ]
 
 # Override default flag values for local packages and extra-deps
 flags: {}
