@@ -12,7 +12,7 @@ toBetSum :: [Event] -> [HBS.ChoiceSum ()]
 toBetSum events = do
   event <- events
   case eventSportID event of
-    Football -> undefined
+    Football -> HBS.Football <$> extractChoices extractFootballChoices event
     _ -> []
 
 type FDJChoice a = HB.Choice a ()
