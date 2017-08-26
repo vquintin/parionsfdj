@@ -1,5 +1,7 @@
-{-# LANGUAGE MultiParamTypeClasses, OverloadedStrings,
-  RecordWildCards #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module ParionsFDJ.Parse.Outcome
   ( POutcome(..)
@@ -11,17 +13,17 @@ import qualified Data.Text.Read as TR
 import qualified ParionsFDJ.JSON.Outcome as OC
 import ParionsFDJ.Parse.Parsable (Parsable(..))
 
-data POutcome = POutcome
+data POutcome a = POutcome
   { cote :: Double
-  , label :: Text
+  , label :: a
   , pos :: Int
   , trend :: Trend
   } deriving (Eq, Show)
 
-instance Parsable OC.Outcome POutcome where
+instance (Parsable Text a) => Parsable OC.Outcome (POutcome a) where
   parseData oc = do
     cote <- parseData $ OC.cote oc
-    let label = OC.label oc
+    label <- parseData $ OC.label oc
     pos <- parseData $ OC.pos oc
     trend <- parseData $ OC.trend oc
     return POutcome {..}

@@ -1,9 +1,11 @@
-{-# LANGUAGE MultiParamTypeClasses, OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses, OverloadedStrings,
+  RecordWildCards #-}
 
 module ParionsFDJ.Parse.Formule
   (
   ) where
 
+import Control.Applicative ((<|>))
 import Data.Text (Text, splitOn)
 import Data.Time (UTCTime)
 import qualified ParionsFDJ.JSON.Formule as F
@@ -15,10 +17,19 @@ data PFormule = PFormule
   , end :: UTCTime
   , eventInfo :: EventInfo
   , marketID :: Int
-  , marketType :: MarketTypeGroup
+  , market :: Market
   , marketTypeID :: Int
-  , outcomes :: [POutcome]
   } deriving (Eq, Show)
+
+instance Parsable F.Formule PFormule where
+  parseData f = do
+    competitionID <- parseData $ F.competitionId f
+    let end = F.end f
+    eventInfo <- parseData f
+    marketID <- parseData $ F.marketId f
+    market <- parseData f
+    marketTypeID <- parseData $ F.marketTypeId f
+    return PFormule {..}
 
 newtype EventInfo =
   Football FootballEvent
@@ -101,6 +112,32 @@ instance Parsable Text Country where
       "Roumanie" -> return Romania
       _ -> Left $ "Unknown Country " ++ show t
 
-data MarketTypeGroup =
-  HalfTime
+data Market
+  = HalfTime [POutcome MatchWithDraw]
+  | FullTime [POutcome MatchWithDraw]
   deriving (Eq, Show)
+
+instance Parsable F.Formule Market where
+  parseData f =
+    (HalfTime <$> (parseData . F.outcomes) f) <|>
+    (FullTime <$> (parseData . F.outcomes) f)
+
+data MatchWithDraw
+  = W1
+  | Draw
+  | W2
+  deriving (Eq, Show)
+
+instance Parsable Text MatchWithDraw where
+  parseData t =
+    case t of
+      "1" -> return W1
+      "N" -> return Draw
+      "2" -> return W2
+      _ -> Left $ "Unknown outcome for match with draw: " ++ show t
+
+instance Parsable F.MarketTypeID Int where
+  parseData mt =
+    case mt of
+      F.AsInt i -> return i
+      F.AsText t -> parseData t
