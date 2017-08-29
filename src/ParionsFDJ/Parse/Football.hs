@@ -22,10 +22,13 @@ instance Parsable EV.Event [HB.Choice FB.Football ()] where
   parseData e = do
     let tag = ()
     eventInfo <- parseData e
-    betTypesAndOdds <- undefined
+    betTypesAndOdds <- (go . nullableToList . EV.formules) e
     return $ do
       (betType, choiceOdd) <- betTypesAndOdds
       return HB.Choice {..}
+    where
+      go :: [F.Formule] -> Either String [(HB.BetType FB.Football, Double)]
+      go fs = concat <$> sequence (fmap parseData fs)
 
 instance Parsable F.Formule [(HB.BetType FB.Football, Double)] where
   parseData f = zip <$> parseData f <*> parseData f
@@ -34,7 +37,13 @@ instance Parsable EV.Event (HB.Match FB.Football) where
   parseData e = HB.Match <$> parseData e <*> parseData e
 
 instance Parsable EV.Event (HB.Lineup FB.Football) where
-  parseData e = undefined
+  parseData e =
+    case EV.formules e of
+      EV.NotNull (f:_) ->
+        case splitOn "-" (F.label f) of
+          [a, b] -> Right $ FB.Lineup a b
+          _ -> Left $ "Can't parse match line up: " ++ show (F.label f)
+      _ -> Left "No formula in event"
 
 instance Parsable EV.Event (HB.Competition FB.Football) where
   parseData e = parseData $ EV.competition e
@@ -77,6 +86,7 @@ instance Parsable F.Formule [HB.BetType FB.Football] where
         (fmap . fmap)
           FB.HalfTimeWinOrDraw
           (traverse (parseData . OC.label) (F.outcomes f))
+      _ -> Left $ "Unknown market type group: " ++ show (F.marketTypeGroup f)
 
 instance Parsable F.Formule [Double] where
   parseData f = traverse (parseData . OC.cote) (F.outcomes f)
@@ -90,3 +100,9 @@ instance (Parsable [a] [b]) => Parsable (EV.Nullable [a]) [b] where
     case nxs of
       EV.Null -> Right []
       EV.NotNull xs -> parseData xs
+
+nullableToList :: EV.Nullable [a] -> [a]
+nullableToList nas =
+  case nas of
+    EV.Null -> []
+    EV.NotNull as -> as
