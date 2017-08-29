@@ -1,32 +1,17 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module ParionsFDJ.Parse.Outcome
-  ( POutcome(..)
+  (
   ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Read as TR
+import qualified HBet.Types as TY
 import qualified ParionsFDJ.JSON.Outcome as OC
 import ParionsFDJ.Parse.Parsable (Parsable(..))
-
-data POutcome a = POutcome
-  { cote :: Double
-  , label :: a
-  , pos :: Int
-  , trend :: Trend
-  } deriving (Eq, Show)
-
-instance (Parsable Text a) => Parsable OC.Outcome (POutcome a) where
-  parseData oc = do
-    cote <- parseData $ OC.cote oc
-    label <- parseData $ OC.label oc
-    pos <- parseData $ OC.pos oc
-    trend <- parseData $ OC.trend oc
-    return POutcome {..}
 
 instance Parsable Text Double where
   parseData t = do
@@ -42,14 +27,10 @@ instance Parsable Text Double where
                then '.'
                else c)
 
-data Trend
-  = Down
-  | Nil
-  | Up
-  deriving (Eq, Show)
-
-instance Parsable Text Trend where
-  parseData "-1" = Right Down
-  parseData "0" = Right Nil
-  parseData "1" = Right Up
-  parseData t = Left $ "Unknown trend " ++ show t
+instance Parsable Text TY.WinOrDraw where
+  parseData t =
+    case t of
+      "1" -> Right TY.W1
+      "N" -> Right TY.Draw
+      "2" -> Right TY.W2
+      _ -> Left $ "Unknown outcome for win or draw: " ++ show t
