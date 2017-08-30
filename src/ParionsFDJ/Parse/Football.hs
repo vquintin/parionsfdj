@@ -3,12 +3,14 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module ParionsFDJ.Parse.Football
   (
   ) where
 
-import Data.Text (Text, splitOn)
+import Control.Monad (join)
+import Data.Text (Text, pack, splitOn, unpack)
 import qualified HBet.Bet as HB
 import qualified HBet.Football as FB
 import qualified HBet.Types as TY
@@ -88,7 +90,12 @@ instance Parsable F.Formule [HB.BetType FB.Football] where
       "Score exact" -> go b form
       "MT/FM" -> go c form
       "Double chance" -> go d form
-      "Plus/Moins" -> go (e 0.0) form
+      "Plus/Moins" ->
+        let (_ :: String, _ :: String, _ :: String, [goals :: String]) =
+              (unpack . F.marketType) form RE.=~
+              ("Plus/Moins ([0-9]+,5).*" :: String)
+            result = go <$> (e <$> (parseData . pack) goals) <*> pure form
+        in join result
       _ -> Left $ "Unknown market type group: " ++ show (F.marketTypeGroup form)
     where
       go h formule = traverse (h . OC.label) (F.outcomes formule)
