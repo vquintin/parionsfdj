@@ -17,6 +17,7 @@ import qualified ParionsFDJ.JSON.Formule as F
 import qualified ParionsFDJ.JSON.Outcome as OC
 import ParionsFDJ.Parse.Outcome
 import ParionsFDJ.Parse.Parsable
+import qualified Text.Regex.TDFA as RE
 
 instance Parsable EV.Event [HB.Choice FB.Football ()] where
   parseData e = do
@@ -53,6 +54,7 @@ instance Parsable Text (HB.Competition FB.Football) where
     case t of
       "Ligue 1" -> return $ FB.ChD1 TY.France
       "Ligue 2" -> return $ FB.ChD2 TY.France
+      "Bundesliga 1" -> return $ FB.ChD1 TY.Germany
       "Bundesliga 2" -> return $ FB.ChD2 TY.Germany
       _ -> extractWithCountry t
     where
@@ -80,13 +82,39 @@ instance Parsable Text TY.Country where
       _ -> Left $ "Unknown Country " ++ show t
 
 instance Parsable F.Formule [HB.BetType FB.Football] where
-  parseData f =
-    case F.marketTypeGroup f of
-      "Mi-Temps" ->
-        (fmap . fmap)
-          FB.HalfTimeWinOrDraw
-          (traverse (parseData . OC.label) (F.outcomes f))
-      _ -> Left $ "Unknown market type group: " ++ show (F.marketTypeGroup f)
+  parseData form =
+    case F.marketTypeGroup form of
+      "Mi-Temps" -> go a form
+      "Score exact" -> go b form
+      "MT/FM" -> go c form
+      "Double chance" -> go d form
+      "Plus/Moins" -> go (e 0.0) form
+      _ -> Left $ "Unknown market type group: " ++ show (F.marketTypeGroup form)
+    where
+      go h formule = traverse (h . OC.label) (F.outcomes formule)
+      a :: Text -> Either String (HB.BetType FB.Football)
+      a t = FB.HalfTimeWinOrDraw <$> parseData t
+      b :: Text -> Either String (HB.BetType FB.Football)
+      b t =
+        case splitOn " - " t of
+          [a, b] -> FB.ExactScore <$> parseData a <*> parseData b
+          _ -> Left $ "Can't parse score: " ++ show t
+      c :: Text -> Either String (HB.BetType FB.Football)
+      c t =
+        case splitOn "/" t of
+          [a, b] -> FB.HTFTWinOrDraw <$> parseData a <*> parseData b
+          _ -> Left $ "Can't parse HTFT: " ++ show t
+      d :: Text -> Either String (HB.BetType FB.Football)
+      d t =
+        case splitOn "/" t of
+          [a, b] -> FB.DoubleChance <$> parseData a <*> parseData b
+          _ -> Left $ "Can't parse double chance: " ++ show t
+      e :: Double -> Text -> Either String (HB.BetType FB.Football)
+      e goals t =
+        case t of
+          "Plus" -> return $ FB.NumberOfGoals GT goals
+          "Moins" -> return $ FB.NumberOfGoals LT goals
+          _ -> Left $ "Can't parse plus/moins: " ++ show t
 
 instance Parsable F.Formule [Double] where
   parseData f = traverse (parseData . OC.cote) (F.outcomes f)
