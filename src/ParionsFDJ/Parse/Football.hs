@@ -19,6 +19,7 @@ import qualified ParionsFDJ.JSON.Formule as F
 import qualified ParionsFDJ.JSON.Outcome as OC
 import ParionsFDJ.Parse.Outcome
 import ParionsFDJ.Parse.Parsable
+import Text.Read (readEither)
 import qualified Text.Regex.TDFA as RE
 
 instance Parsable EV.Event [HB.Choice FB.Football ()] where
@@ -96,6 +97,13 @@ instance Parsable F.Formule [HB.BetType FB.Football] where
               ("Plus/Moins ([0-9]+,5).*" :: String)
             result = go <$> (e <$> (parseData . pack) goals) <*> pure form
         in join result
+      "Handicap" ->
+        let (_ :: String, _ :: String, _ :: String, [h1 :: String, h2]) =
+              (unpack . F.marketType) form RE.=~
+              ("Handicap \\[([0-9]+):([0-9]+)\\]" :: String)
+            hcap = (-) <$> readEither h1 <*> readEither h2
+            result = go <$> (f <$> hcap) <*> pure form
+        in join result
       _ -> Left $ "Unknown market type group: " ++ show (F.marketTypeGroup form)
     where
       go h formule = traverse (h . OC.label) (F.outcomes formule)
@@ -122,6 +130,8 @@ instance Parsable F.Formule [HB.BetType FB.Football] where
           "Plus" -> return $ FB.NumberOfGoals GT goals
           "Moins" -> return $ FB.NumberOfGoals LT goals
           _ -> Left $ "Can't parse plus/moins: " ++ show t
+      f :: Int -> Text -> Either String (HB.BetType FB.Football)
+      f hcap t = FB.Handicap <$> pure hcap <*> parseData t
 
 instance Parsable F.Formule [Double] where
   parseData f = traverse (parseData . OC.cote) (F.outcomes f)
