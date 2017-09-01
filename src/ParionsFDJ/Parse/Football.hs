@@ -59,6 +59,12 @@ instance Parsable Text (HB.Competition FB.Football) where
       "Ligue 2" -> return $ FB.ChD2 TY.France
       "Bundesliga 1" -> return $ FB.ChD1 TY.Germany
       "Bundesliga 2" -> return $ FB.ChD2 TY.Germany
+      "Série A" -> return $ FB.ChD1 TY.Italia
+      "Serie B" -> return $ FB.ChD2 TY.Italia
+      "MLS" -> return $ FB.ChD1 TY.USA
+      "Premier League" -> return $ FB.ChD1 TY.England
+      "Liga Primera" -> return $ FB.ChD1 TY.Spain
+      "Liga Segunda" -> return $ FB.ChD2 TY.Spain
       _ -> extractWithCountry t
     where
       extractWithCountry s =
@@ -73,6 +79,7 @@ instance Parsable Text TY.Country where
       "Belgique" -> return TY.Belgium
       "Bulgarie" -> return TY.Bulgaria
       "Chili" -> return TY.Chile
+      "Colombie" -> return TY.Columbia
       "Croatie" -> return TY.Croatia
       "France" -> return TY.France
       "Allemagne" -> return TY.Germany
